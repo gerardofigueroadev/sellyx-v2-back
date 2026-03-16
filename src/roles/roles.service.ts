@@ -13,7 +13,7 @@ const ADMIN_PERMS = [
   'customers:manage', 'customers:view',
   'shifts:manage', 'shifts:view',
   'sales:create', 'sales:view',
-  'orders:view_all', 'reports:view',
+  'orders:view_all', 'orders:void', 'reports:view',
 ];
 
 const CAJERO_PERMS = [
@@ -75,12 +75,9 @@ export class RolesService {
     console.log('✓ Rol superadmin creado');
   }
 
-  /** Seed permissions. Idempotent (skips if already exist). */
+  /** Seed permissions. Idempotent — inserts only missing permissions. */
   async seedPermissions(): Promise<void> {
-    const count = await this.permissionsRepo.count();
-    if (count > 0) return;
-
-    await this.permissionsRepo.save([
+    const defs = [
       { name: 'org:manage',        description: 'Gestionar datos y configuración de la organización' },
       { name: 'branches:manage',   description: 'Crear, editar y eliminar sucursales' },
       { name: 'users:manage',      description: 'Crear, editar y eliminar usuarios del equipo' },
@@ -93,9 +90,16 @@ export class RolesService {
       { name: 'sales:create',      description: 'Crear nuevas ventas y pedidos' },
       { name: 'sales:view',        description: 'Ver ventas propias y del turno actual' },
       { name: 'orders:view_all',   description: 'Ver pedidos de todas las sucursales y turnos' },
+      { name: 'orders:void',       description: 'Anular ventas completadas (requiere flag de organización)' },
       { name: 'reports:view',      description: 'Acceder a los reportes de ventas y rentabilidad' },
-    ].map(p => this.permissionsRepo.create(p)));
-    console.log('✓ Permisos creados');
+    ];
+    const existing = await this.permissionsRepo.find();
+    const existingNames = new Set(existing.map(p => p.name));
+    const toCreate = defs.filter(d => !existingNames.has(d.name));
+    if (toCreate.length > 0) {
+      await this.permissionsRepo.save(toCreate.map(p => this.permissionsRepo.create(p)));
+      console.log(`✓ Permisos creados: ${toCreate.map(p => p.name).join(', ')}`);
+    }
   }
 
   findAll(orgId: number): Promise<Role[]> {

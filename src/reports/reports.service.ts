@@ -18,16 +18,18 @@ export class ReportsService {
     const bf = this.branchFilter(branchId);
     const [row] = await this.em.query(`
       SELECT
-        COALESCE(SUM(o.total), 0)::numeric            AS "totalSales",
-        COUNT(o.id)::int                              AS "totalOrders",
-        COALESCE(AVG(o.total), 0)::numeric            AS "avgTicket",
-        COALESCE(SUM(CASE WHEN o."paymentMethod" = 'cash'     THEN o.total ELSE 0 END), 0)::numeric AS "cashSales",
-        COALESCE(SUM(CASE WHEN o."paymentMethod" = 'card'     THEN o.total ELSE 0 END), 0)::numeric AS "cardSales",
-        COALESCE(SUM(CASE WHEN o."paymentMethod" = 'transfer' THEN o.total ELSE 0 END), 0)::numeric AS "transferSales"
+        COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total ELSE 0 END), 0)::numeric AS "totalSales",
+        COUNT(CASE WHEN o.status = 'completed' THEN 1 END)::int                              AS "totalOrders",
+        COALESCE(AVG(CASE WHEN o.status = 'completed' THEN o.total END), 0)::numeric         AS "avgTicket",
+        COALESCE(SUM(CASE WHEN o.status = 'completed' AND o."paymentMethod" = 'cash'     THEN o.total ELSE 0 END), 0)::numeric AS "cashSales",
+        COALESCE(SUM(CASE WHEN o.status = 'completed' AND o."paymentMethod" = 'card'     THEN o.total ELSE 0 END), 0)::numeric AS "cardSales",
+        COALESCE(SUM(CASE WHEN o.status = 'completed' AND o."paymentMethod" = 'transfer' THEN o.total ELSE 0 END), 0)::numeric AS "transferSales",
+        COUNT(CASE WHEN o.status = 'voided' THEN 1 END)::int                                 AS "voidedCount",
+        COALESCE(SUM(CASE WHEN o.status = 'voided' THEN o.total ELSE 0 END), 0)::numeric     AS "voidedTotal"
       FROM orders o
       JOIN branches b ON b.id = o."branchId"
       WHERE b."organizationId" = $1
-        AND o.status = 'completed'
+        AND o.status IN ('completed', 'voided')
         AND o."createdAt"::date BETWEEN $2 AND $3
         ${bf}
     `, [orgId, from, to]);
@@ -39,6 +41,8 @@ export class ReportsService {
       cashSales:     parseFloat(row.cashSales),
       cardSales:     parseFloat(row.cardSales),
       transferSales: parseFloat(row.transferSales),
+      voidedCount:   row.voidedCount,
+      voidedTotal:   parseFloat(row.voidedTotal),
     };
   }
 

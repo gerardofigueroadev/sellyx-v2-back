@@ -40,9 +40,10 @@ export class ShiftsController {
   /** Historial de turnos (admin ve todos, cajero ve los de su sucursal) */
   @Get()
   @Permissions('sales:view')
-  findAll(@Request() req) {
+  findAll(@Request() req, @Query('branchId') branchId?: string) {
     const isAdmin = req.user.permissions.includes('orders:view_all');
-    return this.service.findAll(req.user.orgId, isAdmin ? undefined : req.user.branchId);
+    const resolvedBranchId = isAdmin ? (branchId ? +branchId : undefined) : req.user.branchId;
+    return this.service.findAll(req.user.orgId, resolvedBranchId);
   }
 
   /** Resumen de un turno específico */

@@ -9,6 +9,7 @@ export enum OrderStatus {
   PENDING   = 'pending',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+  VOIDED    = 'voided',
 }
 
 export enum PaymentMethod {
@@ -49,6 +50,15 @@ export class Order {
 
   @Column({ nullable: true })
   notes: string;
+
+  @Column({ nullable: true, type: 'text' })
+  voidReason: string | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  voidedAt: Date | null;
+
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  voidedBy: User | null;
 
   @ManyToOne(() => Branch, branch => branch.orders, { eager: true })
   branch: Branch;

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, UseGuards, Request, Query, HttpCode } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -49,4 +49,15 @@ export class OrdersController {
   @Patch(':id/cancel')
   @Permissions('sales:create')
   cancel(@Param('id') id: string) { return this.ordersService.cancel(+id); }
+
+  @Patch(':id/void')
+  @Permissions('orders:void')
+  @HttpCode(200)
+  voidOrder(
+    @Param('id') id: string,
+    @Body() body: { reason: string },
+    @Request() req,
+  ) {
+    return this.ordersService.voidOrder(+id, body.reason, req.user.id, req.user.orgId);
+  }
 }

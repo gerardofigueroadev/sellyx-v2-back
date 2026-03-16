@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus, OrderChannel } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
+import { Organization } from '../organizations/entities/organization.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ProductsService } from '../products/products.service';
 import { ShiftsService } from '../shifts/shifts.service';
@@ -14,6 +15,8 @@ export class OrdersService {
     private ordersRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private orderItemsRepository: Repository<OrderItem>,
+    @InjectRepository(Organization)
+    private orgRepository: Repository<Organization>,
     private productsService: ProductsService,
     private shiftsService: ShiftsService,
   ) {}
@@ -110,6 +113,25 @@ export class OrdersService {
   async cancel(id: number): Promise<Order> {
     const order = await this.findOne(id);
     order.status = OrderStatus.CANCELLED;
+    return this.ordersRepository.save(order);
+  }
+
+  async voidOrder(id: number, reason: string, userId: number, orgId: number): Promise<Order> {
+    const order = await this.findOne(id);
+    if (order.status !== OrderStatus.COMPLETED) {
+      throw new BadRequestException('Solo se pueden anular órdenes completadas');
+    }
+    const org = await this.orgRepository.findOne({ where: { id: orgId } });
+    if (!org?.settings?.allowVoids) {
+      throw new BadRequestException('Las anulaciones de ventas no están habilitadas para esta organización');
+    }
+    if (!reason?.trim()) {
+      throw new BadRequestException('El motivo de anulación es obligatorio');
+    }
+    order.status = OrderStatus.VOIDED;
+    order.voidReason = reason.trim();
+    order.voidedAt = new Date();
+    order.voidedBy = { id: userId } as any;
     return this.ordersRepository.save(order);
   }
 
