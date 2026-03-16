@@ -32,6 +32,7 @@ import { SubscriptionGuard } from './subscriptions/subscription.guard';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
         logging: false,
+        ssl: configService.get('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),
       inject: [ConfigService],
     }),
