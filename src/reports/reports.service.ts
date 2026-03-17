@@ -4,6 +4,8 @@ import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class ReportsService {
+  private tz = process.env.APP_TZ ?? 'UTC';
+
   constructor(
     @InjectEntityManager()
     private em: EntityManager,
@@ -30,7 +32,7 @@ export class ReportsService {
       JOIN branches b ON b.id = o."branchId"
       WHERE b."organizationId" = $1
         AND o.status IN ('completed', 'voided')
-        AND o."createdAt"::date BETWEEN $2 AND $3
+        AND (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date BETWEEN $2 AND $3
         ${bf}
     `, [orgId, from, to]);
 
@@ -51,14 +53,14 @@ export class ReportsService {
     const bf = this.branchFilter(branchId);
     const rows = await this.em.query(`
       SELECT
-        EXTRACT(HOUR FROM o."createdAt")::int  AS hour,
+        EXTRACT(HOUR FROM (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}'))::int AS hour,
         COALESCE(SUM(o.total), 0)::numeric     AS total,
         COUNT(o.id)::int                       AS orders
       FROM orders o
       JOIN branches b ON b.id = o."branchId"
       WHERE b."organizationId" = $1
         AND o.status = 'completed'
-        AND o."createdAt"::date BETWEEN $2 AND $3
+        AND (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date BETWEEN $2 AND $3
         ${bf}
       GROUP BY hour
       ORDER BY hour
@@ -78,14 +80,14 @@ export class ReportsService {
     const bf = this.branchFilter(branchId);
     const rows = await this.em.query(`
       SELECT
-        o."createdAt"::date                    AS day,
+        (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date AS day,
         COALESCE(SUM(o.total), 0)::numeric     AS total,
         COUNT(o.id)::int                       AS orders
       FROM orders o
       JOIN branches b ON b.id = o."branchId"
       WHERE b."organizationId" = $1
         AND o.status = 'completed'
-        AND o."createdAt"::date BETWEEN $2 AND $3
+        AND (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date BETWEEN $2 AND $3
         ${bf}
       GROUP BY day
       ORDER BY day
@@ -112,7 +114,7 @@ export class ReportsService {
       JOIN branches b  ON b.id  = o."branchId"
       WHERE b."organizationId" = $1
         AND o.status = 'completed'
-        AND o."createdAt"::date BETWEEN $2 AND $3
+        AND (o."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date BETWEEN $2 AND $3
         ${bf}
       GROUP BY p.name
       ORDER BY qty DESC
@@ -142,7 +144,7 @@ export class ReportsService {
       LEFT JOIN orders o ON o."shiftId" = s.id
       WHERE b."organizationId" = $1
         AND s.type = 'pos'
-        AND s."openedAt"::date BETWEEN $2 AND $3
+        AND (s."openedAt" AT TIME ZONE 'UTC' AT TIME ZONE '${this.tz}')::date BETWEEN $2 AND $3
         ${branchCond}
       GROUP BY s.id, b.name, u.name
       ORDER BY s."openedAt" DESC
