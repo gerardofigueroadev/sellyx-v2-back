@@ -33,6 +33,7 @@ import { SubscriptionGuard } from './subscriptions/subscription.guard';
         synchronize: true,
         logging: false,
         ssl: configService.get('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+        extra: { options: `-c timezone=${configService.get('APP_TZ', 'UTC')}` },
       }),
       inject: [ConfigService],
     }),

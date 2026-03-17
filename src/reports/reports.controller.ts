@@ -11,7 +11,8 @@ export class ReportsController {
   constructor(private readonly service: ReportsService) {}
 
   private dates(from?: string, to?: string) {
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     return { from: from ?? today, to: to ?? today };
   }
 
