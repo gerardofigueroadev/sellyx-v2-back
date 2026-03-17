@@ -25,6 +25,7 @@ export class ShiftsService {
       status: ShiftStatus.OPEN,
       openingAmount: dto.openingAmount,
       notes: dto.notes,
+      openedAt: new Date(),
       branch: { id: branchId } as any,
       user: { id: userId } as any,
     });
