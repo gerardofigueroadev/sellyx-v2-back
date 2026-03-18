@@ -15,6 +15,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { ShiftsModule } from './shifts/shifts.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ReportsModule } from './reports/reports.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { SubscriptionGuard } from './subscriptions/subscription.guard';
 
 @Module({
@@ -49,6 +50,7 @@ import { SubscriptionGuard } from './subscriptions/subscription.guard';
     OrdersModule,
     CustomersModule,
     ReportsModule,
+    WhatsappModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: SubscriptionGuard },
