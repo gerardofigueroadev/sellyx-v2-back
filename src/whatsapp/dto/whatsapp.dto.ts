@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsIn } from 'class-validator';
 
 export class SaveWhatsappConfigDto {
   @IsString()
@@ -19,8 +19,13 @@ export class SaveKeywordDto {
   @IsString()
   keyword: string;
 
+  @IsIn(['text', 'menu', 'order_status'])
+  @IsOptional()
+  responseType?: string;
+
   @IsString()
-  response: string;
+  @IsOptional()
+  response?: string;
 
   @IsBoolean()
   @IsOptional()
@@ -31,6 +36,10 @@ export class UpdateKeywordDto {
   @IsString()
   @IsOptional()
   keyword?: string;
+
+  @IsIn(['text', 'menu', 'order_status'])
+  @IsOptional()
+  responseType?: string;
 
   @IsString()
   @IsOptional()
