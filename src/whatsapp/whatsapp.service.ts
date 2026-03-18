@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { WhatsappConfig } from './entities/whatsapp-config.entity';
-import { WhatsappKeyword } from './entities/whatsapp-keyword.entity';
+import { KeywordResponseType, WhatsappKeyword } from './entities/whatsapp-keyword.entity';
 import { Product } from '../products/entities/product.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { SaveWhatsappConfigDto, SaveKeywordDto, UpdateKeywordDto } from './dto/whatsapp.dto';
@@ -49,7 +49,7 @@ export class WhatsappService {
   async createKeyword(orgId: number, dto: SaveKeywordDto): Promise<WhatsappKeyword> {
     const config = await this.configRepo.findOne({ where: { orgId } });
     if (!config) throw new NotFoundException('Configura las credenciales de WhatsApp primero');
-    const kw = this.keywordRepo.create({ ...dto, responseType: dto.responseType ?? 'text', config });
+    const kw = this.keywordRepo.create({ ...dto, responseType: (dto.responseType ?? 'text') as KeywordResponseType, config });
     return this.keywordRepo.save(kw);
   }
 
